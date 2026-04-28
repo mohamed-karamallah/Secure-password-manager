@@ -1,1 +1,4 @@
 ReqDocs/
+
+/modules/__pycache__/*
+tests/*
