@@ -12,28 +12,28 @@ from modules.elgamal import (
 import modules.elgamal
 
 def test_load_params():
-    p, alpha = load_params()
-    assert isinstance(p, int)
+    q, alpha = load_params()
+    assert isinstance(q, int)
     assert isinstance(alpha, int)
-    assert p > 0
+    assert q > 0
     assert alpha > 0
 
 def test_generate_keypair():
-    p, alpha = load_params()
-    public_key, private_key = generate_keypair(p, alpha)
+    q, alpha = load_params()
+    public_key, private_key = generate_keypair(q, alpha)
     
     assert isinstance(public_key, int)
     assert isinstance(private_key, int)
-    assert 1 < private_key < p - 1
-    assert 0 < public_key < p
+    assert 1 < private_key < q - 1
+    assert 0 < public_key < q
     
     # Verify mathematically
-    expected_y = pow(alpha, private_key, p)
+    expected_y = pow(alpha, private_key, q)
     assert public_key == expected_y
 
 def test_sign_and_verify():
-    p, alpha = load_params()
-    public_key, private_key = generate_keypair(p, alpha)
+    q, alpha = load_params()
+    public_key, private_key = generate_keypair(q, alpha)
     
     # Hash a dummy vault content
     vault_content = b'{"vault": "secret"}'
@@ -41,45 +41,45 @@ def test_sign_and_verify():
     message_hash_int = int(message_hash, 16)
     
     # Sign
-    r, s = sign(message_hash_int, private_key, p, alpha)
+    r, s = sign(message_hash_int, private_key, q, alpha)
     
     assert isinstance(r, int)
     assert isinstance(s, int)
-    assert 0 < r < p
-    assert 0 < s < p - 1
+    assert 0 < r < q
+    assert 0 < s < q - 1
     
     # Verify
-    is_valid = verify(message_hash_int, r, s, public_key, p, alpha)
+    is_valid = verify(message_hash_int, r, s, public_key, q, alpha)
     assert is_valid == True
 
 def test_verify_fails_on_tampering():
-    p, alpha = load_params()
-    public_key, private_key = generate_keypair(p, alpha)
+    q, alpha = load_params()
+    public_key, private_key = generate_keypair(q, alpha)
     
     vault_content = b'{"vault": "secret"}'
     message_hash = hashlib.sha256(vault_content).hexdigest()
     message_hash_int = int(message_hash, 16)
     
-    r, s = sign(message_hash_int, private_key, p, alpha)
+    r, s = sign(message_hash_int, private_key, q, alpha)
     
     # Tamper with the message
     tampered_vault = b'{"vault": "hacked"}'
     tampered_hash = hashlib.sha256(tampered_vault).hexdigest()
     tampered_hash_int = int(tampered_hash, 16)
     
-    is_valid = verify(tampered_hash_int, r, s, public_key, p, alpha)
+    is_valid = verify(tampered_hash_int, r, s, public_key, q, alpha)
     assert is_valid == False
     
     # Tamper with the signature
-    tampered_r = (r + 1) % p
+    tampered_r = (r + 1) % q
     if tampered_r == 0:
         tampered_r = 1
-    is_valid_sig = verify(message_hash_int, tampered_r, s, public_key, p, alpha)
+    is_valid_sig = verify(message_hash_int, tampered_r, s, public_key, q, alpha)
     assert is_valid_sig == False
 
 def test_key_storage(monkeypatch):
-    p, alpha = load_params()
-    public_key, private_key = generate_keypair(p, alpha)
+    q, alpha = load_params()
+    public_key, private_key = generate_keypair(q, alpha)
     username = "testuser"
     
     with tempfile.TemporaryDirectory() as temp_dir:
