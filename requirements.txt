@@ -1,5 +1,8 @@
 # Core dependencies
 cryptography
-pydantic
+pycryptodome
+Pillow
+numpy
+sympy
 scapy  # Required for CTF 1 packet analysis
 # Note: For CTF 1, ensure 'tshark' is installed on your system path for scapy to handle certain pcap operations.
