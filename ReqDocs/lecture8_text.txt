@@ -1,0 +1,128 @@
+--- PAGE 1 ---
+Cairo University
+ Faculty of Engineering
+ Computer Engineering Department
+Dr. Sandra Wahid
+1
+--- PAGE 2 ---
+Diffie -Hellman Key Exchange
+???The purpose  of the algorithm  is to enable  two users  to securely  exchange  a key 
+that can then  be used  for subsequent  symmetric  encryption  of messages .
+???Depends  for its effectiveness  on the difficulty  of computing  discrete  
+logarithms .
+Involved  Mathematical  Concepts :
+???A primitive  root  of a prime  number  p is one whose  powers  modulo  p generate  
+all the integers  from  1 to p - 1.
+???If a is a primitive  root  of the prime  number  p, then  the numbers
+                                                        are distinct  and consist  of the integers  from  1 through  p - 1     
+   in some  permutation .
+???For any integer  b and a primitive  root  a of prime  number  p, we can find a 
+unique  exponent  i such  that: 
+???The exponent  i is referred  to as the discrete  logarithm  of b for the base  a, mod  p. 
+???Expressed  as dloga,p (b). 
+2
+
+--- PAGE 3 ---
+Diffie -Hellman Key Exchange???There  are two publicly  known  numbers : 
+???a prime  number  q 
+???an integer  a that is a primitive  root  of q and a < q
+???Suppose  the users  A and B wish  to create  a shared  key.
+???Each  user  (eg. A) generates  their  key
+???chooses  a private  key: xA < q
+???computes  their  public  key: yA = axA mod q
+???User  A computes  the key as K = yBxA mod q 
+???Similarly,  user  B computes  the key as K = yAxB mod q 
+3
+These two calculations 
+produce identical results, 
+How??
+K is a shared symmetric 
+secret key between A and B.
+--- PAGE 4 ---
+Diffie -Hellman Key Exchange
+Diffie -Hellman  Security :
+???Because  xA and xB are private,  an adversary  only  has: q, a, yA, and yB. 
+???Thus,  the adversary  is forced  to solve  the discrete  logarithm  problem,  which  is hard . 
+???For example,  to determine  the private  key of user  B, an adversary  must  compute :                                                 
+                                      then  calculate  K as: yAxB mod q 
+???For large  primes,  calculating  discrete  logarithms  is considered  infeasible .
+Example :
+???Users  Alice  & Bob wish  to share  a secret  key:
+???Agree  on prime  q=353  and a=3
+???Select  random  private  keys :
+???A chooses  xA=97 < 353 , B chooses  xB=233  < 353 
+???Compute  respective  public  keys :
+???yA=397 mod 353 = 40 (Alice)
+???yB=3233 mod 353 = 248 (Bob)
+???Compute  shared  secret  key as:
+???K= yBxA mod 353 = 24897 mod 353 = 160 (Alice)
+???K= yAxB mod 353 = 40233 mod 353 = 160 (Bob)
+4
+
+--- PAGE 5 ---
+Diffie -Hellman Key Exchange
+5
+
+--- PAGE 6 ---
+Man -in-the-Middle Attack
+???The protocol  described  is insecure  against  a man -in-the-middle  attack .
+???Suppose  Alice  and Bob wish  to exchange  keys,  and Darth  is the adversary . The attack  
+proceeds  as follows :
+6
+
+--- PAGE 7 ---
+ElGamal  Cryptographic System
+???A public -key scheme  based  on discrete  logarithms,  closely  related  to the Diffie -Hellman  
+technique .
+7
+The security of Elgamal  is based on 
+the difficulty of computing discrete 
+logarithms . 
+???To recover A???s private key, an 
+adversary would have to compute:
+ 
+???To recover the one -time key K, an 
+adversary would have to determine 
+the random number k:
+
+--- PAGE 8 ---
+ElGamal  Cryptographic System
+Demonstrating  why  the scheme  works :
+Example :
+???q=19 and a=10
+???Alice  computes  her key:
+???A chooses  xA=5 & computes  yA=105 mod 19 = 3
+???Bob sends  message  M=17 as (11,5) by
+???choosing  random  k=6
+???computing  K = yAk mod q = 36 mod 19 = 7
+???computing  C1 = ak mod q = 106 mod 19 = 11
+ C2 = KM mod q = 7.17 mod 19 = 5
+???Alice  recovers  original  message  by computing :
+???recover  K = C1xA mod q = 115 mod 19 = 7
+???compute  inverse  K-1 using  the Extended  Euclidean  Algorithm  = 7-1 mod 19 = 11
+???recover  M = C2 K-1 mod q = 5.11 mod 19 = 178
+a=19, b=7 ??? gcd(19,7) is 
+guaranteed to be 1 since 
+q=19 is a prime number so 
+inverse is y after appling  
+Ext. Eclud .
+--- PAGE 9 ---
+Pseudorandom Number Generation Based on an Asymmetric Cipher
+PRNG  based  on RSA:
+???Known  as the Micali???Schnorr  PRNG .
+???This PRNG  has much  the same  structure  as the output  feedback  (OFB)  mode  
+used  as a PRNG .
+???The encryption  algorithm  is RSA rather  than  a symmetric  block  cipher .
+???A portion  of the output  is fed back  to the next  iteration  of the encryption  
+algorithm  and the remainder  of the output  is used  as pseudorandom  bits.
+???The motivation  for this separation  of the output  into two distinct  parts  is so that the 
+pseudorandom  bits from  one stage  do not provide  input  to the next  stage .
+9
+
+--- PAGE 10 ---
+Pseudorandom Number Generation Based on an Asymmetric Cipher
+PRNG  based  on RSA:
+10
+
+--- PAGE 11 ---
+11
