@@ -15,7 +15,6 @@ import modules.elgamal
 class TestVault(unittest.TestCase):
 
     def setUp(self):
-        # use temp dirs so tests don't mess with real data
         self.temp_keys = tempfile.TemporaryDirectory()
         self.temp_vaults = tempfile.TemporaryDirectory()
 
@@ -24,7 +23,6 @@ class TestVault(unittest.TestCase):
         self.key_patcher.start()
         self.vault_patcher.start()
 
-        # create a test user with keys
         self.username = "testvault"
         self.master_pw = "supersecret123"
         elgamal.initialize_user(self.username)
@@ -104,7 +102,6 @@ class TestVault(unittest.TestCase):
         vault.add_credential(self.username, self.master_pw,
                              "test.com", "user", "pass")
 
-        # try opening with the wrong password — should fail at AES decryption
         with self.assertRaises(ValueError):
             vault.load_vault(self.username, "wrongpassword")
 
@@ -113,14 +110,11 @@ class TestVault(unittest.TestCase):
         vault.add_credential(self.username, self.master_pw,
                              "bank.com", "bankuser", "bankpw")
 
-        # manually tamper with the encrypted data in the vault file
         vault_path = vault._vault_path(self.username)
         with open(vault_path, 'r') as f:
             data = json.load(f)
 
-        # flip a character in the encrypted data
         enc = data["encrypted_data"]
-        # swap first char to something different
         if enc[0] == 'A':
             data["encrypted_data"] = 'B' + enc[1:]
         else:
@@ -129,7 +123,6 @@ class TestVault(unittest.TestCase):
         with open(vault_path, 'w') as f:
             json.dump(data, f)
 
-        # should fail signature verification
         with self.assertRaises(ValueError):
             vault.load_vault(self.username, self.master_pw)
 

@@ -2,7 +2,6 @@ import sys
 import os
 import getpass
 
-# make sure we can import modules from the project root
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from modules import elgamal
@@ -38,7 +37,6 @@ def main():
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
-            # --- init new user ---
             uname = ask_username()
             pw = getpass.getpass("Set master password: ")
             pw2 = getpass.getpass("Confirm master password: ")
@@ -47,17 +45,14 @@ def main():
                 continue
 
             try:
-                # generate elgamal keys first
                 elgamal.initialize_user(uname)
                 print(f"ElGamal keys generated for {uname}.")
 
-                # then create the vault
                 vault.create_vault(uname, pw)
             except Exception as e:
                 print(f"Error: {e}")
 
         elif choice == "2":
-            # --- add credential ---
             uname = ask_username()
             pw = ask_master_pw()
             site = input("Website: ").strip()
@@ -70,7 +65,6 @@ def main():
                 print(f"Error: {e}")
 
         elif choice == "3":
-            # --- get credential ---
             uname = ask_username()
             pw = ask_master_pw()
             site = input("Website to search: ").strip()
@@ -87,7 +81,6 @@ def main():
                 print(f"Error: {e}")
 
         elif choice == "4":
-            # --- list all ---
             uname = ask_username()
             pw = ask_master_pw()
 
@@ -103,7 +96,6 @@ def main():
                 print(f"Error: {e}")
 
         elif choice == "5":
-            # --- update credential ---
             uname = ask_username()
             pw = ask_master_pw()
             site = input("Website to update: ").strip()
@@ -115,7 +107,6 @@ def main():
                 print(f"Error: {e}")
 
         elif choice == "6":
-            # --- delete credential ---
             uname = ask_username()
             pw = ask_master_pw()
             site = input("Website to delete: ").strip()

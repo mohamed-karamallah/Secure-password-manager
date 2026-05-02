@@ -11,7 +11,6 @@ VAULTS_DIR = os.path.join(PROJECT_ROOT, "vaults")
 
 
 def derive_key(master_pw):
-    # sha256 the master password to get a 32-byte AES key
     return hashlib.sha256(master_pw.encode('utf-8')).digest()
 
 
@@ -28,7 +27,6 @@ def create_vault(username, master_pw):
     if not os.path.exists(VAULTS_DIR):
         os.makedirs(VAULTS_DIR)
 
-    # start with empty credential list
     save_vault(username, master_pw, [])
     print(f"Vault created for {username}.")
 
@@ -49,17 +47,13 @@ def save_vault(username, master_pw, creds):
     """Encrypt credentials and write to disk, then sign the result."""
     key = derive_key(master_pw)
 
-    # turn creds into JSON bytes then encrypt
     raw = json.dumps(creds).encode('utf-8')
     ct, nonce, tag = _encrypt(raw, key)
 
-    # b64 encode everything so we can store in JSON
     enc_b64 = base64.b64encode(ct).decode()
     nonce_b64 = base64.b64encode(nonce).decode()
     tag_b64 = base64.b64encode(tag).decode()
 
-    # the part we sign is the encrypted data (as per project spec:
-    # "Compute a SHA-256 hash of the vault contents (encrypted content)")
     sig = signatures.sign_vault(enc_b64, username)
 
     vault_data = {
@@ -91,11 +85,8 @@ def load_vault(username, master_pw):
     enc_b64 = vault_data["encrypted_data"]
     sig = vault_data["signature"]
 
-    # verify signature before we do anything else
-    # this will raise ValueError if tampered
     signatures.verify_vault(enc_b64, sig, username)
 
-    # signature ok, now decrypt
     key = derive_key(master_pw)
     ct = base64.b64decode(enc_b64)
     nonce = base64.b64decode(vault_data["nonce"])
@@ -113,7 +104,6 @@ def load_vault(username, master_pw):
 def add_credential(username, master_pw, website, user, pw):
     creds = load_vault(username, master_pw)
 
-    # check if already exists
     for entry in creds:
         if entry["website"].lower() == website.lower():
             raise ValueError(f"Credential for '{website}' already exists. Use update instead.")
