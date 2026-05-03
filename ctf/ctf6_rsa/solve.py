@@ -3,7 +3,7 @@ import os
 from sympy import factorint
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_dir = os.path.join(script_dir, "..", "..", "CTF_DATA", "CTF_DATA", "CTF6")
+data_dir = os.path.join(script_dir, "..", "CTF_DATA", "CTF6")
 challenge_path = os.path.join(data_dir, "challenge.txt")
 
 n = None

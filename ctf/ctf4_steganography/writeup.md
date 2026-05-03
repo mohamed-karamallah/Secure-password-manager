@@ -1,65 +1,32 @@
-# CTF 4 — Steganography Writeup
+# CTF 4: Steganography — Solution Process
 
-## Challenge Description
-
-> Steganography is the practice of hiding data inside another file. You are given
-> an image file `stego.png` that looks like an ordinary photograph. Something is
-> HIDING inside this image using LSB (Least Significant Bit) steganography.
-> 
-> **Hint:** Determine which tool was used to hide data first (steghide, OpenStego,
-> etc.) — may require a passphrase.
-
----
-
-## Tools Used
-
-| Tool | Purpose |
-|------|---------|
-| **Python 3** | Scripting language for analysis |
-| **Pillow (PIL)** | Reading pixel data from the PNG file |
-
----
+## Objective
+The goal of this challenge was to extract a hidden flag from an image file named `stego.png`. The challenge hinted that data was hiding inside the image, potentially using a specific steganography tool that might require a passphrase.
 
 ## Thought Process
+Before falling down the rabbit hole of brute-forcing passwords or trying dozens of different steganography tools (like steghide or OpenStego), I decided to check for the most fundamental steganography technique first: **Least Significant Bit (LSB) encoding without encryption.**
 
-### Step 1 — Initial Image Analysis
-We were provided an image file named `stego.png`. The challenge prompt hinted that a specific steganography tool (like `steghide` or `OpenStego`) might have been used and might require a passphrase. 
+If the data was hidden in plain text within the LSBs, I could extract it manually without needing to guess passwords or identify the exact tool used by the challenge creator.
 
-However, before making assumptions or trying to brute-force passwords with various tools, the first rule of steganography is to check the basics: **Plain Least Significant Bit (LSB) encoding**.
+## Implementation: The Custom Python Extractor
+To test this hypothesis, I wrote a lightweight, custom Python script (`solvectf4_simple.py`) to manually extract the data. 
 
-### Step 2 — Developing an LSB Extractor
-Rather than guessing the tool, we wrote a small Python script to inspect the lowest bit (the `& 1` bit) of every pixel in the image. The image was identified as having a Grayscale mode (`L`), meaning each pixel is represented by a single integer rather than an `(R, G, B)` tuple.
+The logic of my script was straightforward:
+1. **Load the Image:** Use the `Pillow` library to open `stego.png` and load its pixel map.
+2. **Extract Bits:** Loop through every single pixel in the image. Since the image was grayscale, I could isolate the lowest bit of each pixel's color value by performing a bitwise AND operation (`pixel_value & 1`).
+3. **Reconstruct Bytes:** Group the continuous stream of extracted bits into chunks of 8 (since 8 bits = 1 byte = 1 ASCII character).
+4. **Convert and Search:** Convert those binary chunks into text and search the resulting string for the known flag format `CMPN{`.
 
-The extraction logic:
-1. Iterate over the image width and height (row by row).
-2. Extract the lowest bit from each pixel using bitwise AND (`pixel & 1`).
-3. Collect all these bits into a continuous stream.
-4. Group the stream into chunks of 8 bits (1 byte).
-5. Convert each byte into its corresponding ASCII character.
+Running my script successfully dumped the hidden text, and the flag was found instantly without needing any passwords.
 
-### Step 3 — Flag Discovery
-Once the bits were converted to a string of ASCII text, we performed a simple search for the known flag format `CMPN{`. 
+## Alternative Verification
+To double-check my work and ensure my script's logic was sound, I also uploaded the image to **StegOnline** (a standard web-based CTF tool). By selecting the "Extract Files/Data" feature and isolating **Bit 0** (the LSB), the tool instantly returned the exact same text stream. 
 
-Surprisingly, the data was not encrypted, compressed, or disguised behind a complex tool like `steghide` (which doesn't natively support PNGs anyway) or `OpenStego`. It was simply embedded as raw plaintext bits in the image's LSB stream. 
+## Conclusion and Flag
+My initial hypothesis was correct. The data was not encrypted or password-protected; it was simply embedded as raw plaintext bits in the image's LSB stream. 
 
-The flag was located near the very beginning of the extracted text:
-
-```
+**Flag Found:**
+```text
 CMPN{Hidd3n_in_pl4in_sigh7}
 ```
-
----
-
-## Flag
-
-```
-CMPN{Hidd3n_in_pl4in_sigh7}
-```
-
-Translation: **"Hidden in plain sight"** — perfectly matching the fact that the data wasn't encrypted with a complex tool but was literally sitting in the raw LSBs.
-
----
-
-## Summary
-
-Despite the prompt hinting at advanced tools and passphrases, the solution required a back-to-basics approach. By writing a custom Python script using the `Pillow` library, we iterated through the pixels of the grayscale image, extracted the least significant bit of each, and grouped them into ASCII characters. This immediately revealed the unencrypted flag.
+The text translates to "Hidden in plain sight," which perfectly confirms why the basic LSB extraction worked without any advanced tools.

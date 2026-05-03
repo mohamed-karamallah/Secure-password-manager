@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_dir = os.path.join(script_dir, "..", "..", "CTF_DATA", "CTF_DATA", "CTF2")
+data_dir = os.path.join(script_dir, "..", "CTF_DATA", "CTF2")
 
 img1_path = os.path.join(data_dir, "Layer1.png")
 img2_path = os.path.join(data_dir, "Layer2.png")

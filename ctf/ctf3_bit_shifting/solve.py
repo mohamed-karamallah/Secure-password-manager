@@ -1,6 +1,6 @@
 import os
 DATA_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "CTF_DATA", "CTF_DATA", "CTF3", "shifted.txt"
+    os.path.dirname(__file__), "..", "CTF_DATA", "CTF3", "shifted.txt"
 )
 
 def solve():
