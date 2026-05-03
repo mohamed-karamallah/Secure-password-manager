@@ -9,28 +9,21 @@ KEYS_DIR = os.path.join(PROJECT_ROOT, "keys")
 
 
 def load_params():
-    """Load ElGamal shared parameters (q, alpha) from config/params.json."""
     with open(CONFIG_PATH, 'r') as f:
         data = json.load(f)
     return int(data['elgamal']['q'], 16), int(data['elgamal']['alpha'], 16)
 
 
 def generate_keypair(q, alpha):
-    """
-    Generate an ElGamal (public_key, private_key) pair.
-      private key x : random integer in (1, q-1)
-      public  key y : alpha^x mod q
-    """
+    # Private key x is random integer in (1, q-1)
+    # Public  key y is alpha^x mod q
     x = 2 + secrets.randbelow(q - 3)
     y = pow(alpha, x, q)
     return y, x
 
 
 def initialize_user(username):
-    """
-    Generate and persist keys for a new user.
-    Raises if keys already exist to prevent accidental overwrite.
-    """
+
     private_path = os.path.join(KEYS_DIR, f"{username}_private.key")
     if os.path.exists(private_path):
         raise Exception(f"Keys already exist for '{username}'. Use load_private_key() instead.")
@@ -42,7 +35,6 @@ def initialize_user(username):
 
 
 def save_keys(username, public_key, private_key):
-    """Save public and private keys to the keys/ directory."""
     os.makedirs(KEYS_DIR, exist_ok=True)
     with open(os.path.join(KEYS_DIR, f"{username}_private.key"), 'w') as f:
         f.write(hex(private_key))
@@ -51,7 +43,6 @@ def save_keys(username, public_key, private_key):
 
 
 def load_private_key(username):
-    """Load and return the user's private key."""
     path = os.path.join(KEYS_DIR, f"{username}_private.key")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Private key not found for user '{username}'")
@@ -60,7 +51,6 @@ def load_private_key(username):
 
 
 def load_public_key(username):
-    """Load and return a user's public key (local or imported)."""
     path = os.path.join(KEYS_DIR, f"{username}_public.key")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Public key not found for user '{username}'")
