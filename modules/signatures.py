@@ -5,10 +5,7 @@ from modules import elgamal
 
 
 def hash_content(content) -> int:
-    """
-    Computes the SHA-256 hash of the content (str or bytes)
-    and returns it as an integer.
-    """
+    """ Computes the SHA-256 hash and returns it as an integer. """
     if isinstance(content, str):
         content = content.encode('utf-8')
     h = hashlib.sha256(content).hexdigest()
@@ -16,16 +13,7 @@ def hash_content(content) -> int:
 
 
 def sign_vault(vault_content, username: str) -> dict:
-    """
-    Signs the vault content for the given username using ElGamal.
 
-    Args:
-        vault_content: The vault data (str or bytes) to be signed.
-        username: The username whose private key will be used to sign.
-
-    Returns:
-        dict: The signature containing 'r' and 's' as integers.
-    """
     message_hash_int = hash_content(vault_content)
     q, alpha = elgamal.load_params()
     x = elgamal.load_private_key(username)
@@ -53,17 +41,7 @@ def sign_vault(vault_content, username: str) -> dict:
 
 
 def verify_vault(vault_content, signature: dict, username: str) -> bool:
-    """
-    Verifies the signature of the vault content using the user's public key.
 
-    Args:
-        vault_content: The vault data (str or bytes) that was signed.
-        signature: A dict containing 'r' and 's' signature components.
-        username: The username whose public key will be used for verification.
-
-    Returns:
-        bool: True if the signature is valid, False otherwise.
-    """
     if not isinstance(signature, dict) or 'r' not in signature or 's' not in signature:
         print("ALERT: Invalid signature format. The vault refuses to open.")
         raise ValueError("Invalid signature format.")
