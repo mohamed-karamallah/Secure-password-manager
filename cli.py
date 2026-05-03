@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from modules import elgamal
 from modules import vault
+from modules import export
 
 
 def print_menu():
@@ -16,8 +17,8 @@ def print_menu():
     print("4) List all sites")
     print("5) Update credential")
     print("6) Delete credential")
-    print("7) Exit")
-    print("------------------------")
+    print("7) Export vault to another user")
+    print("8) Exit")
 
 
 def ask_master_pw():
@@ -122,11 +123,25 @@ def main():
                 print(f"Error: {e}")
 
         elif choice == "7":
-            print("Bye.")
-            break
+            sender = ask_username()
+            sender_pw = ask_master_pw()
+            receiver = input("Receiver username: ").strip()
+            receiver_pw = getpass.getpass("Receiver's new master password: ")
+            receiver_pw2 = getpass.getpass("Confirm receiver's master password: ")
+            if receiver_pw != receiver_pw2:
+                print("Passwords don't match, try again.")
+                continue
 
+            try:
+                export.export_vault(sender, sender_pw, receiver, receiver_pw)
+            except Exception as e:
+                print(f"Error: {e}")
+
+        elif choice == "8":
+            print("close")
+            break
         else:
-            print("Invalid option, pick 1-7.")
+            print("invalid option, pick 1-8.")
 
 
 if __name__ == "__main__":
