@@ -11,7 +11,9 @@ KEYS_DIR = os.path.join(PROJECT_ROOT, "keys")
 def load_params():
     with open(CONFIG_PATH, 'r') as f:
         data = json.load(f)
-    return int(data['elgamal']['q'], 16), int(data['elgamal']['alpha'], 16)
+    q     = int(data['elgamal']['q'],     16)
+    alpha = int(data['elgamal']['alpha'], 16)
+    return q, alpha
 
 
 def generate_keypair(q, alpha):
