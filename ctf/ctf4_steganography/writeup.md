@@ -1,12 +1,5 @@
 # CTF 4: Steganography — Solution Process
 
-## Objective
-The goal of this challenge was to extract a hidden flag from an image file named `stego.png`. The challenge hinted that data was hiding inside the image, potentially using a specific steganography tool that might require a passphrase.
-
-## Thought Process
-Before falling down the rabbit hole of brute-forcing passwords or trying dozens of different steganography tools (like steghide or OpenStego), I decided to check for the most fundamental steganography technique first: **Least Significant Bit (LSB) encoding without encryption.**
-
-If the data was hidden in plain text within the LSBs, I could extract it manually without needing to guess passwords or identify the exact tool used by the challenge creator.
 
 ## Implementation: The Custom Python Extractor
 To test this hypothesis, I wrote a lightweight, custom Python script (`solvectf4_simple.py`) to manually extract the data. 
@@ -19,11 +12,6 @@ The logic of my script was straightforward:
 
 Running my script successfully dumped the hidden text, and the flag was found instantly without needing any passwords.
 
-## Alternative Verification
-To double-check my work and ensure my script's logic was sound, I also uploaded the image to **StegOnline** (a standard web-based CTF tool). By selecting the "Extract Files/Data" feature and isolating **Bit 0** (the LSB), the tool instantly returned the exact same text stream. 
-
-## Conclusion and Flag
-My initial hypothesis was correct. The data was not encrypted or password-protected; it was simply embedded as raw plaintext bits in the image's LSB stream. 
 
 **Flag Found:**
 ```text
