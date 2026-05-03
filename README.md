@@ -1,12 +1,21 @@
-# Secure Password Manager — README
+# Secure Password Manager — CMPS426
+
+## Team 25
+
+| Name | ID |
+|------|----|
+| Yousef Elessawy | 1220300 |
+| Mohamed Ashraf | 4230167 |
+| Ahmed Sameh | 4230138 |
+| Youssef Afify | 1220299 |
+
+---
 
 ## Requirements
 
 ```
 pip install pycryptodome
 ```
-
-Python 3.8+ required. No other dependencies.
 
 ---
 
