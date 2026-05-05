@@ -13,6 +13,30 @@ The system has 4 modules that chain together:
 
 ---
 
+## Shared Parameters (`config/params.json`)
+
+Both ElGamal and Diffie-Hellman use the same shared domain parameters loaded from `config/params.json`:
+
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| **`q`** (prime) | RFC 3526 — 1536-bit MODP Group 5 | [RFC 3526, Section 2](https://www.rfc-editor.org/rfc/rfc3526#section-2) |
+| **`alpha`** (generator) | `31` — verified primitive root of `q` | Computed locally |
+
+### Why this prime?
+The prime `q` is the **RFC 3526 1536-bit MODP Group 5** — a well-known, publicly vetted safe prime used in TLS, IKE, and SSH. It is a **safe prime** (`q = 2p + 1` where `p` is also prime), which eliminates small-subgroup attacks.
+
+### Why `alpha = 31`?
+The RFC standard uses generator `2`, but `2` only generates a subgroup of order `(q-1)/2` — it is not a true primitive root. We use `alpha = 31`, which is the **smallest verified primitive root** of this prime (order exactly `q-1`), matching the strict textbook definition.
+
+**Verification (two checks sufficient for a safe prime):**
+```
+pow(31, 2,         q) ≠ 1   ✓   (order is not 2)
+pow(31, (q-1)//2,  q) ≠ 1   ✓   (order is not (q-1)/2)
+→ order must be q-1  →  31 is a primitive root
+```
+
+---
+
 ## Step 1 — Setup (Module 1)
 
 **CLI option: `1) Initialize new user`**

@@ -11,14 +11,12 @@ KEYS_DIR = os.path.join(PROJECT_ROOT, "keys")
 def load_params():
     with open(CONFIG_PATH, 'r') as f:
         data = json.load(f)
-    q     = int(data['elgamal']['q'],     16)
+    q = int(data['elgamal']['q'], 16)
     alpha = int(data['elgamal']['alpha'], 16)
     return q, alpha
 
 
 def generate_keypair(q, alpha):
-    # Private key x is random integer in (1, q-1)
-    # Public  key y is alpha^x mod q
     x = 2 + secrets.randbelow(q - 3)
     y = pow(alpha, x, q)
     return y, x

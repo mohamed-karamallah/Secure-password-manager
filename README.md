@@ -125,3 +125,18 @@ project/
     ├── signatures.py     # Module 3: ElGamal digital signatures
     └── export.py         # Module 4: DH vault export
 ```
+
+---
+
+## CTF Challenges
+
+This repository also contains solutions and writeups for the 6 security CTF challenges included in the course project. They are located in the `ctf/` directory:
+
+- **CTF 1 — Packet Analysis**: Extracting flags from captured network traffic using packet analyzers.
+- **CTF 2 — Image Manipulation**: Recovering hidden flags by manipulating image properties.
+- **CTF 3 — Bit Shifting**: Reversing bit-level transformations to decode a hidden message.
+- **CTF 4 — Steganography**: Extracting concealed data from steganographic images.
+- **CTF 5 — Padding Oracle**: Exploiting cryptographic padding vulnerabilities to decrypt ciphertext.
+- **CTF 6 — RSA**: Solving RSA-based cryptographic challenges to recover the plaintext.
+
+Each CTF subdirectory contains the necessary scripts, data files, and documentation (writeups) detailing the solution methodology.
