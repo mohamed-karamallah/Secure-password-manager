@@ -64,26 +64,26 @@ def export_vault(sender_username, sender_master_pw,
     print(f"  Device 1 ({sender_username}) signed and sent DH public key.")
 
     signatures.verify_vault(str(sender_dh_pub), sig1, sender_username)
-    print("  Device 2 verified Device 1's DH public key signature. ✓")
+    print("  Device 2 verified Device 1's DH public key signature. [OK]")
 
     # Device 2 signs its DH public key
     sig2 = signatures.sign_vault(str(receiver_dh_pub), receiver_username)
     print(f"  Device 2 ({receiver_username}) signed and sent DH public key.")
 
     signatures.verify_vault(str(receiver_dh_pub), sig2, receiver_username)
-    print("  Device 1 verified Device 2's DH public key signature. ✓")
+    print("  Device 1 verified Device 2's DH public key signature. [OK]")
 
     # Both devices compute the shared secret
     sender_shared = compute_shared_secret(receiver_dh_pub, sender_dh_priv, q)
     receiver_shared = compute_shared_secret(sender_dh_pub, receiver_dh_priv, q)
     assert sender_shared == receiver_shared, "Shared secrets do not match!"
-    print("  Shared secret computed on both devices. ✓")
+    print("  Shared secret computed on both devices. [OK]")
 
     # Derive session AES-256 key from the shared secret
     session_key = derive_session_key(sender_shared)
-    print("  Session AES-256 key derived via SHA-256. ✓")
+    print("  Session AES-256 key derived via SHA-256. [OK]")
     print("\n[Phase 2] Vault Transfer")
-
+    #phas 2
     # Device 1 decrypts the vault with the master password
     creds = vault.load_vault(sender_username, sender_master_pw)
     print(f"  Device 1 decrypted vault ({len(creds)} credential(s)).")
@@ -100,7 +100,7 @@ def export_vault(sender_username, sender_master_pw,
 
     # Sign the session-encrypted data with Device 1's ElGamal key
     transfer_sig = signatures.sign_vault(session_ct_b64, sender_username)
-    print("  Session-encrypted data signed by Device 1. ✓")
+    print("  Session-encrypted data signed by Device 1. [OK]")
 
     # "Transmit" — data passed in memory for CLI simulation
     transfer_package = {
@@ -119,7 +119,7 @@ def export_vault(sender_username, sender_master_pw,
         transfer_package["signature"],
         sender_username
     )
-    print("  Device 2 verified transfer signature. ✓")
+    print("  Device 2 verified transfer signature. [OK]")
 
     received_ct = base64.b64decode(transfer_package["encrypted_data"])
     received_nonce = base64.b64decode(transfer_package["nonce"])
@@ -134,6 +134,6 @@ def export_vault(sender_username, sender_master_pw,
     vault.save_vault(receiver_username, receiver_master_pw, imported_creds)
     print(f"  Vault saved for '{receiver_username}' with new master password.")
 
-    print(f"\n✓ Export complete! {len(imported_creds)} credential(s) "
+    print(f"\n[OK] Export complete! {len(imported_creds)} credential(s) "
           f"transferred from '{sender_username}' to '{receiver_username}'.")
     return imported_creds

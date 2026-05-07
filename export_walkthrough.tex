@@ -1,0 +1,260 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\title{Secure Password Manager: Vault Export Walkthrough}
+\author{Documentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+The \texttt{export.py} module implements a secure protocol to transfer a user's entire password vault to another user. Since vaults are securely encrypted and tied to a user's master password, we cannot simply copy the file. Instead, the module uses a combination of asymmetric cryptography (Diffie-Hellman Key Exchange, ElGamal Digital Signatures) and symmetric cryptography (AES-256-GCM) to ensure that the transfer is secure against eavesdropping and tampering.
+
+\section{The Export Protocol Walkthrough}
+
+The vault export process is divided into three distinct phases:
+
+\subsection{Phase 1: Diffie-Hellman Key Exchange}
+To securely encrypt the vault for transit, both devices need a shared secret key that an attacker cannot intercept.
+\begin{enumerate}
+    \item Both the Sender (Device 1) and Receiver (Device 2) generate ephemeral (temporary) Diffie-Hellman public and private keys using shared global parameters ($q$ and $\alpha$).
+    \item Device 1 signs its ephemeral public key using its ElGamal private key and sends it to Device 2.
+    \item Device 2 verifies Device 1's signature. This prevents Man-in-the-Middle (MitM) attacks.
+    \item Device 2 does the same: signs its public key and sends it to Device 1, which verifies it.
+    \item Both devices compute the shared DH secret and derive a 256-bit AES session key using SHA-256.
+\end{enumerate}
+
+\subsection{Phase 2: Vault Transfer (Sender Side)}
+With a secure session key established, the Sender prepares the data.
+\begin{enumerate}
+    \item The Sender decrypts their local vault using their master password.
+    \item The Sender re-encrypts the vault data using the AES-256-GCM session key derived in Phase 1.
+    \item The Sender signs the encrypted vault ciphertext using their ElGamal private key to guarantee authenticity.
+    \item The encrypted data, cryptographic nonce, authentication tag, and digital signature are packaged and ``transmitted'' to the Receiver.
+\end{enumerate}
+
+\subsection{Phase 3: Vault Import (Receiver Side)}
+The Receiver processes the incoming secure package.
+\begin{enumerate}
+    \item The Receiver verifies the digital signature of the package using the Sender's public ElGamal key. If invalid, the process aborts.
+    \item The Receiver decrypts the vault using the AES-256-GCM session key.
+    \item The decrypted credentials are saved into the Receiver's local vault, encrypted with the Receiver's master password.
+\end{enumerate}
+
+\section{Function Explanations}
+
+Here is a breakdown of the helper functions defined in \texttt{export.py}:
+
+\begin{itemize}
+    \item \textbf{\texttt{load\_dh\_params()}}: Reads the Diffie-Hellman parameters (a large prime $q$ and a primitive root $\alpha$) from \texttt{config/params.json}.
+    \item \textbf{\texttt{generate\_dh\_keypair(q, alpha)}}: Generates a random private key and computes the corresponding public key $\alpha^{\text{private}} \pmod q$.
+    \item \textbf{\texttt{compute\_shared\_secret(other\_pub, my\_priv, q)}}: Computes the Diffie-Hellman shared secret: $\text{other\_pub}^{\text{my\_priv}} \pmod q$.
+    \item \textbf{\texttt{derive\_session\_key(shared\_secret)}}: Hashes the large integer shared secret using SHA-256 to produce a secure 256-bit (32-byte) key for AES encryption.
+    \item \textbf{\texttt{\_encrypt\_with\_key(plaintext\_bytes, key)}}: Encrypts data using AES-GCM, which provides both confidentiality and authenticated encryption (preventing tampering).
+    \item \textbf{\texttt{\_decrypt\_with\_key(ciphertext, nonce, tag, key)}}: Decrypts AES-GCM data, verifying the authentication tag to ensure the ciphertext was not modified.
+    \item \textbf{\texttt{export\_vault(...)}}: The main orchestration function that runs Phase 1, Phase 2, and Phase 3 in sequence.
+\end{itemize}
+
+\section{Line-by-Line Code Breakdown}
+
+Below is the complete \texttt{export.py} code with line-by-line explanations.
+
+\begin{lstlisting}[language=Python]
+#mod4
+import json            # For parsing JSON data and config files
+import os              # For filesystem paths
+import secrets         # For cryptographically secure random number generation
+import hashlib         # For SHA-256 hashing
+import base64          # For encoding binary ciphertext to strings
+from Crypto.Cipher import AES  # PyCryptodome for AES-GCM encryption
+from modules import elgamal    # Local module: Key management
+from modules import signatures # Local module: Digital signatures
+from modules import vault      # Local module: Vault CRUD operations
+
+# Define paths to locate the config/params.json file dynamically
+MODULES_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(MODULES_DIR)
+CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "params.json")
+
+def load_dh_params():
+    # Open the params.json file in read mode
+    with open(CONFIG_PATH, 'r') as f:
+        data = json.load(f) # Parse JSON to a Python dictionary
+        # Extract DH parameters 'q' and 'alpha', converting from hex strings to integers
+        q = int(data['dh']['q'], 16)
+        alpha = int(data['dh']['alpha'], 16)
+        return q, alpha # Return the parameters tuple
+
+def generate_dh_keypair(q, alpha):
+    # Generate a random private key between 2 and q-2 using secure RNG
+    private_key = 2 + secrets.randbelow(q - 3)
+    # Calculate public key = (alpha^private_key) mod q
+    public_key = pow(alpha, private_key, q)
+    return public_key, private_key # Return the keypair tuple
+
+def compute_shared_secret(other_public_key, my_private_key, q):
+    # Calculate shared secret = (other_public_key^my_private_key) mod q
+    return pow(other_public_key, my_private_key, q)
+
+def derive_session_key(shared_secret):
+    # Convert the large integer shared secret into big-endian bytes
+    secret_bytes = shared_secret.to_bytes(
+        (shared_secret.bit_length() + 7) // 8, byteorder='big'
+    )
+    # Hash the bytes with SHA-256 to create a uniformly random 256-bit key
+    return hashlib.sha256(secret_bytes).digest()
+
+def _encrypt_with_key(plaintext_bytes, key):
+    # Initialize AES cipher in Galois/Counter Mode (GCM) using the session key
+    cipher = AES.new(key, AES.MODE_GCM)
+    # Encrypt the plaintext and generate an authentication tag
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext_bytes)
+    # Return the encrypted data, the unique nonce used, and the auth tag
+    return ciphertext, cipher.nonce, tag
+
+def _decrypt_with_key(ciphertext, nonce, tag, key):
+    # Initialize AES cipher in GCM mode with the provided key and nonce
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    # Decrypt the ciphertext and verify the authentication tag matches
+    return cipher.decrypt_and_verify(ciphertext, tag)
+
+def export_vault(sender_username, sender_master_pw,
+                 receiver_username, receiver_master_pw):
+    # Load ElGamal private keys for both users into memory
+    elgamal.load_private_key(sender_username)
+    elgamal.load_private_key(receiver_username)
+
+    print("\n[Phase 1] Diffie-Hellman Key Exchange")
+    # Load global DH parameters q and alpha
+    q, alpha = load_dh_params()
+    # Sender generates ephemeral DH keys
+    sender_dh_pub, sender_dh_priv = generate_dh_keypair(q, alpha)
+    # Receiver generates ephemeral DH keys
+    receiver_dh_pub, receiver_dh_priv = generate_dh_keypair(q, alpha)
+    print("  Both devices generated ephemeral DH key pairs.")
+
+    # Sender creates an ElGamal signature of their DH public key
+    sig1 = signatures.sign_vault(str(sender_dh_pub), sender_username)
+    print(f"  Device 1 ({sender_username}) signed and sent DH public key.")
+
+    # Receiver verifies the Sender's signature to prevent MitM
+    signatures.verify_vault(str(sender_dh_pub), sig1, sender_username)
+    print("  Device 2 verified Device 1's DH public key signature. [OK]")
+
+    # Receiver creates an ElGamal signature of their DH public key
+    sig2 = signatures.sign_vault(str(receiver_dh_pub), receiver_username)
+    print(f"  Device 2 ({receiver_username}) signed and sent DH public key.")
+
+    # Sender verifies the Receiver's signature
+    signatures.verify_vault(str(receiver_dh_pub), sig2, receiver_username)
+    print("  Device 1 verified Device 2's DH public key signature. [OK]")
+
+    # Sender computes the shared secret using Receiver's pubkey and their own privkey
+    sender_shared = compute_shared_secret(receiver_dh_pub, sender_dh_priv, q)
+    # Receiver computes the shared secret using Sender's pubkey and their own privkey
+    receiver_shared = compute_shared_secret(sender_dh_pub, receiver_dh_priv, q)
+    # Sanity check: verify the math worked and both secrets are identical
+    assert sender_shared == receiver_shared, "Shared secrets do not match!"
+    print("  Shared secret computed on both devices. [OK]")
+
+    # Derive the 256-bit AES session key from the shared secret
+    session_key = derive_session_key(sender_shared)
+    print("  Session AES-256 key derived via SHA-256. [OK]")
+    
+    print("\n[Phase 2] Vault Transfer")
+    # Sender decrypts their own vault using their master password
+    creds = vault.load_vault(sender_username, sender_master_pw)
+    print(f"  Device 1 decrypted vault ({len(creds)} credential(s)).")
+
+    # Serialize the credentials list to a JSON string, then encode to bytes
+    plain_json = json.dumps(creds).encode('utf-8')
+    # Encrypt the vault bytes using AES-GCM and the DH session key
+    session_ct, session_nonce, session_tag = _encrypt_with_key(
+        plain_json, session_key
+    )
+    # Base64 encode the binary outputs so they can be transmitted as text
+    session_ct_b64 = base64.b64encode(session_ct).decode()
+    session_nonce_b64 = base64.b64encode(session_nonce).decode()
+    session_tag_b64 = base64.b64encode(session_tag).decode()
+    print("  Vault re-encrypted with DH session key.")
+
+    # Sender creates an ElGamal signature over the encrypted vault data
+    transfer_sig = signatures.sign_vault(session_ct_b64, sender_username)
+    print("  Session-encrypted data signed by Device 1. [OK]")
+
+    # Package the encrypted data, AES parameters, and ElGamal signature
+    transfer_package = {
+        "encrypted_data": session_ct_b64,
+        "nonce": session_nonce_b64,
+        "tag": session_tag_b64,
+        "signature": {"r": transfer_sig['r'], "s": transfer_sig['s']},
+        "sender": sender_username,
+    }
+
+    print("\n[Phase 3] Vault Import")
+    # Receiver verifies the Sender's ElGamal signature on the transfer package
+    signatures.verify_vault(
+        transfer_package["encrypted_data"],
+        transfer_package["signature"],
+        sender_username
+    )
+    print("  Device 2 verified transfer signature. [OK]")
+
+    # Receiver base64-decodes the incoming data back into bytes
+    received_ct = base64.b64decode(transfer_package["encrypted_data"])
+    received_nonce = base64.b64decode(transfer_package["nonce"])
+    received_tag = base64.b64decode(transfer_package["tag"])
+
+    # Receiver decrypts the vault using the AES-GCM session key
+    decrypted_json = _decrypt_with_key(
+        received_ct, received_nonce, received_tag, session_key
+    )
+
+    # Parse the decrypted JSON bytes back into a Python list of dictionaries
+    imported_creds = json.loads(decrypted_json.decode('utf-8'))
+    print(f"  Decrypted {len(imported_creds)} credential(s) with session key.")
+    
+    # Receiver saves the imported credentials into their own vault, encrypted with their password
+    vault.save_vault(receiver_username, receiver_master_pw, imported_creds)
+    print(f"  Vault saved for '{receiver_username}' with new master password.")
+
+    # Print success message
+    print(f"\n[OK] Export complete! {len(imported_creds)} credential(s) "
+          f"transferred from '{sender_username}' to '{receiver_username}'.")
+    # Return the imported credentials
+    return imported_creds
+\end{lstlisting}
+
+\end{document}
